@@ -1,0 +1,30 @@
+{
+  "name": "atd",
+  "version": "0.1.0",
+  "description": "Node library for interacting with McAfee ATD appliances.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anamico/atd.git"
+  },
+  "keywords": [
+    "ATD",
+    "McAfee"
+  ],
+  "author": "Andrew Longhorn <Andrew_Longhorn@McAfee.com> (https://www.linkedin.com/in/andrewlonghorn/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Anamico/atd/issues"
+  },
+  "homepage": "https://github.com/Anamico/atd#readme",
+  "dependencies": {
+    "request": "^2.88.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.0.2"
+  }
+}
