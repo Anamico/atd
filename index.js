@@ -185,39 +185,36 @@ module.exports = function(host, ssl, username, password) {
         });
 
         const data = {
-            data: {
-                srcIp: srcip,
-                analyzeAgain: reanalyze === true ? '1' : '0'
-            }
+            submitType: 0, // regular file upload
+            srcIp: srcip,
+            // destIp:
+
+            analyzeAgain: reanalyze === true ? '1' : '0'
         };
 
-        var formData = {
-            my_field: 'file',
-            my_file: fs.createReadStream('C:\\temp\\recording.mp4')
+        // pipe the supplied stream or fall back to the file from the local file system
+        const formData = {
+            amas_filename: stream || fs.createReadStream(filename)
         };
         
-        // todo: auto reconnect if session is no longer valid?
-        const done = function(error, response, body) {
-            const info = parseResponse(error, response, body, callback);
-            if (!info) { return }
-            console.log(info);
-
-            return callback(error);
-        }
-
         var options = {
             method: 'POST',
             uri: uploadUrl,
             headers: headers,
             timeout: 2000,
+            formData: formData,
             data: JSON.stringify(data),
-            rejectUnauthorized: false,       // todo: make this default true and override
-            callback: done
+            rejectUnauthorized: false       // todo: make this default true and override
         }
 
-        // pipe the supplied stream or fall back to the file from the local file system
-        const dataStream = stream || fs.createReadStream(filename);
-        dataStream.pipe(request(options));
+        request(options, function(error, response, body) {
+            // todo: auto reconnect if session is no longer valid?
+            const info = parseResponse(error, response, body, callback);
+            if (!info) { return }
+            console.log(info);
+
+            return callback(error);
+        });
     }
 
     return atd;
