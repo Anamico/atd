@@ -3,5 +3,6 @@
 module.exports = {
     host: 'ATD IP Address',
     user: 'ATD Username',
-    password: 'ATD Password'
+    password: 'ATD Password',
+    ssl: true
 }

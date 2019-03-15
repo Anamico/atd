@@ -1,7 +1,7 @@
 {
   "name": "atd",
-  "version": "0.1.0",
-  "description": "Node library for interacting with McAfee ATD appliances.",
+  "version": "0.1.1",
+  "description": "Javascript library for interacting with McAfee ATD appliances.",
   "main": "index.js",
   "scripts": {
     "test": "mocha --reporter spec"
@@ -12,7 +12,12 @@
   },
   "keywords": [
     "ATD",
-    "McAfee"
+    "McAfee",
+    "Advanced",
+    "Threat",
+    "Defence",
+    "Sandbox",
+    "Security"
   ],
   "author": "Andrew Longhorn <Andrew_Longhorn@McAfee.com> (https://www.linkedin.com/in/andrewlonghorn/)",
   "license": "MIT",
