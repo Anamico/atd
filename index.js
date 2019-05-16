@@ -32,7 +32,7 @@ module.exports = function(host, ssl, username, password) {
      * @param {*} response 
      * @param {*} body 
      * @param {*} callback (err)
-     * @returns parsed response, or null if error and cllback called
+     * @returns parsed response, or null if error and callback called
      */
     function parseResponse(error, response, body, callback) {
         if (error) {
@@ -48,8 +48,8 @@ module.exports = function(host, ssl, username, password) {
         }
 
         if (response.statusCode != 200) {
-            callback(error || new Error(info && info.errorMessage ?
-                response.statusCode + ":" + info.errorMessage :
+            callback(new Error(info && info.errorMessage ?
+                response.statusCode + ":" + response.errorMessage :
                 'HTTP Code: ' + response.statusCode));
             return null;
         }
@@ -66,7 +66,7 @@ module.exports = function(host, ssl, username, password) {
     /**
      * try and "log in"
      * 
-     * @param {*} callback (err)
+     * @param {*} callback (err, results from atd)
      */
     function createSession(callback) {
         // set the header with Auth
@@ -77,7 +77,7 @@ module.exports = function(host, ssl, username, password) {
         // get a session ID
         const url = baseUrl + "session.php";
 
-        //console.log('connect', url, headers);
+        console.log('connect', url, headers);
 
         request({
             method: 'GET',
@@ -87,7 +87,7 @@ module.exports = function(host, ssl, username, password) {
             rejectUnauthorized: false       // todo: make this default true and override
         }, function(error, response, body) {
             const info = parseResponse(error, response, body, callback);
-            if (!info) { return }
+            if (!info) { return; }
             console.log(info);
 
             callback(null, info.results);
@@ -206,6 +206,8 @@ module.exports = function(host, ssl, username, password) {
             data: JSON.stringify(data),
             rejectUnauthorized: false       // todo: make this default true and override
         }
+
+        console.log('submit to ATD', options);
 
         request(options, function(error, response, body) {
             // todo: auto reconnect if session is no longer valid?
