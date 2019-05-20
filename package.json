@@ -1,8 +1,12 @@
 {
   "name": "atd",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Javascript library for interacting with McAfee ATD appliances.",
   "main": "index.js",
+  "files": [
+    "/index.js",
+    "/test"
+  ],
   "scripts": {
     "test": "mocha --reporter spec"
   },

@@ -35,6 +35,7 @@ module.exports = function(host, ssl, username, password) {
      * @returns parsed response, or null if error and callback called
      */
     function parseResponse(error, response, body, callback) {
+        //console.log('parse** ', error, response, body);
         if (error) {
             callback(error);
             return null;
@@ -49,7 +50,7 @@ module.exports = function(host, ssl, username, password) {
 
         if (response.statusCode != 200) {
             callback(new Error(info && info.errorMessage ?
-                response.statusCode + ":" + response.errorMessage :
+                response.statusCode + ":" + info.errorMessage :
                 'HTTP Code: ' + response.statusCode));
             return null;
         }
@@ -181,20 +182,21 @@ module.exports = function(host, ssl, username, password) {
         const uploadUrl = baseUrl + 'fileupload.php';
 
         const headers = Object.assign({}, _header, {
-            'VE-SDK-API': atd.auth
+            'VE-SDK-API': atd.auth,
+            "Content-Type": "multipart/form-data"
         });
 
         const data = {
             submitType: 0, // regular file upload
             srcIp: srcip,
-            // destIp:
-
+            // destIp: '1.2.3.4',
             analyzeAgain: reanalyze === true ? '1' : '0'
         };
 
         // pipe the supplied stream or fall back to the file from the local file system
         const formData = {
-            amas_filename: stream || fs.createReadStream(filename)
+            amas_filename: stream || fs.createReadStream(filename),
+            data: JSON.stringify({ data: data})
         };
         
         var options = {
@@ -203,7 +205,7 @@ module.exports = function(host, ssl, username, password) {
             headers: headers,
             timeout: 2000,
             formData: formData,
-            data: JSON.stringify(data),
+            //data: JSON.stringify(data),
             rejectUnauthorized: false       // todo: make this default true and override
         }
 
@@ -215,7 +217,114 @@ module.exports = function(host, ssl, username, password) {
             if (!info) { return }
             console.log(info);
 
-            return callback(error);
+            const fileData = info.results && info.results[0];
+            const meta = {
+                success: info.success,
+                jobId: info.subId,
+                md5: fileData && fileData.md5,
+                sha1: fileData && fileData.sha1,
+                sha256: fileData && fileData.sha256
+            }
+            return callback(error, meta);
+        });
+    }
+
+    /**
+     * ATD report types.
+     */
+    atd.REPORT = {
+        HTML: 'html',
+        TXT: 'txt',
+        XML: 'xml',
+        ZIP: 'zip',
+        JSON: 'json',
+        IOC: 'ioc',
+        STIX: 'stix',
+        PDF: 'pdf',
+        SAMPLE: 'sample'
+    };
+
+    /**
+     * ATD report lookup options.
+     */
+    const lookupKeys = {
+        JOBID: 'jobId',
+        TASKID: 'iTaskId',
+        MD5: 'md5'
+        // todo: any others?
+    };
+    atd.LOOKUP = lookupKeys;
+
+    /**
+     * Uploads file to ATD for analysis.
+	 * filename - absolute or relative path to the file being analyzed,
+	 * srcip - string representing source IP address for reporting purposes.
+	 * reanalyze - boolean, whether to forcibly reanalyze previously submitted sample.
+     * callback(error, jobId) - for completion, returns analysis job id
+     * stream - IF SUPPLIED, then this is the stream for file content.
+     * 
+     */
+    atd.getReport = function(lookupOption, lookupValue, type, callback, suppressAutoconnect) {
+        // ensure connected (session)
+        if (!atd.session || !atd.auth) {
+            if (suppressAutoconnect) {
+                return callback(new Error('Invalid Session'));
+            }
+            atd.connect(function(err) {
+                return atd.getReport(lookupOption, lookupValue, type, callback, true);
+            });
+        }
+
+        const validOptions = Object.values(lookupKeys);
+        if (validOptions.indexOf(lookupOption) < 0) {
+            return callback(new Error('Invalid Report Lookup Option: ' + Object.keys(lookupKeys).join(', ')));
+        }
+
+        const reportUrl = baseUrl + 'showreport.php';
+
+        const headers = Object.assign({}, _header, {
+            'VE-SDK-API': atd.auth
+            // should be "Expert"? : "Content-Type": "multipart/form-data"
+        });
+        delete headers['Content-Type'];
+        
+        var options = {
+            method: 'GET',
+            uri: reportUrl,
+            headers: headers,
+            timeout: 2000,
+            qs: {
+                iType: type,
+                [lookupOption]: lookupValue
+            },
+            rejectUnauthorized: false       // todo: make this default true and override
+        }
+
+        console.log('show report', options);
+
+        request(options, function(error, response, body) {
+            // todo: auto reconnect if session is no longer valid?
+            console.log(error, response, body);
+            if (error) {
+                return callback(error);
+            }
+    
+            var info = null;
+            if (type === atd.REPORT.JSON) {
+                try {
+                    info = JSON.parse(body);
+                } catch (e) {
+                    // NOP
+                }
+            }
+    
+            if (response.statusCode != 200) {
+                return callback(new Error(info && info.errorMessage ?
+                    response.statusCode + ":" + info.errorMessage :
+                    'HTTP Code: ' + response.statusCode));
+            }
+
+            return callback(error, !error && body);
         });
     }
 
