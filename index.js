@@ -129,7 +129,7 @@ module.exports = function(host, ssl, username, password) {
         }
 
         const headers = Object.assign({}, _header, {
-            'VE-SDK-API': userpass_enc
+            'VE-SDK-API': atd.auth
         });
 
         const url = baseUrl + '/session.php'
